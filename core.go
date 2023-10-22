@@ -44,8 +44,7 @@ type Attribute interface {
 func Element(tag string, stringAttrsOrElements ...any) app.HTMLElem {
 	elements := make([]app.UI, 0)
 
-	ret := app.Elem(tag)
-	ret.XMLNS(Namespace)
+	ret := app.Elem(tag).XMLNS(Namespace)
 
 	var processType func(value any)
 
@@ -63,30 +62,28 @@ func Element(tag string, stringAttrsOrElements ...any) app.HTMLElem {
 			elements = append(elements, v)
 		case app.UI:
 			elements = append(elements, v)
-
 		case Attribute:
 			ret.Attr(v.Name(), v.Value())
 		case string:
 			elements = append(elements, app.Raw(v))
+		case nil:
 		default:
-			panic(fmt.Sprintf("Unsupported type: %T", value))
+			panic(fmt.Sprintf("Unsupported type(%T): %#v", value, value))
 		}
 	}
 
 	for _, sae := range stringAttrsOrElements {
 		processType(sae)
 	}
-	ret.Body(elements...)
-	return ret
+
+	return ret.Body(elements...)
 }
 
 func attrsOnly(tag string, attrs ...Attribute) app.HTMLElem {
-	ret := app.Elem(tag)
-	ret.XMLNS(Namespace)
+	ret := app.Elem(tag).XMLNS(Namespace)
 
 	for _, x := range attrs {
-		tmp := x.(Attribute)
-		ret.Attr(tmp.Name(), tmp.Value())
+		ret.Attr(x.Name(), x.Value())
 	}
 	return ret
 }
@@ -117,17 +114,12 @@ func ClipPath(attrsOrElements ...any) app.HTMLElem {
 }
 
 func Defs(elements ...app.UI) app.HTMLElem {
-	defs := app.Elem("defs")
-	defs.XMLNS(Namespace)
-	defs.Body(elements...)
-	return defs
+	return app.Elem("defs").XMLNS(Namespace).Body(elements...)
 }
 
 // Desc provides an accessible, long-text description of any SVG container element or graphics element.
 func Desc(desc string) app.HTMLElem {
-	d := Element("desc")
-	d.Body(app.Text(desc))
-	return d
+	return Element("desc").Body(app.Text(desc))
 }
 
 // Discard allows authors to specify the time at which particular elements are to be discarded,
@@ -325,7 +317,7 @@ func TextPath(stringAttrsOrElements ...any) app.HTMLElem {
 
 func Title(value string, attrs ...Attribute) app.HTMLElem {
 	a := attrsOnly("title", attrs...)
-	a.Body(app.Raw(value))
+	a.Body(app.Text(value))
 	return a
 }
 
